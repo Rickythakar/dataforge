@@ -18,7 +18,9 @@ export function parseCsv(source: string): CsvParseResult {
 
   const rawRows = parsed.data
   const fields = (rawRows[0] ?? []).map(normalizeHeader)
-  const errors = parsed.errors.map((error) => `Row ${error.row + 1}: ${error.message}`)
+  const errors = parsed.errors.map((error) =>
+    error.row === undefined ? error.message : `Row ${error.row + 1}: ${error.message}`,
+  )
 
   if (fields.length === 0) errors.push('The file must include a header row.')
   if (fields.some((field) => field === '')) errors.push('Every column needs a header.')
