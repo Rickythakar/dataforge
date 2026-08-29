@@ -10,9 +10,15 @@
 ![Tests](https://img.shields.io/badge/Tests-Vitest-111827?style=flat-square&logo=vitest&logoColor=6E9F18)
 ![Privacy](https://img.shields.io/badge/Data-local_only-35D399?style=flat-square)
 
+[**Open the live app →**](https://rickythakar.github.io/dataforge/)
+
 </div>
 
 DataForge is a privacy-first data preparation workspace for operations teams. Upload a CSV, understand its quality, map it to a destination schema, apply safe repairs, preview the result, and export a clean file—without sending the data to a server.
+
+## Live demo
+
+Visit **[rickythakar.github.io/dataforge](https://rickythakar.github.io/dataforge/)** and select **Load sample data** to explore the complete workflow without providing a file.
 
 ## Why this exists
 
