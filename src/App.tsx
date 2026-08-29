@@ -48,12 +48,16 @@ function App() {
 
   const profile = useMemo(() => profileDataset(rows), [rows])
   const issues = useMemo(() => validateDataset(rows, rules), [rows, rules])
-  const suggestedRepairs = useMemo<RepairRule[]>(() => profile.flatMap((field) => {
-    if (field.type === 'email') return [{ field: field.name, action: 'normalizeEmail' }]
-    if (field.type === 'number' && field.empty > 0) return [{ field: field.name, action: 'fillEmpty', value: '0' }]
-    if (field.type === 'text') return [{ field: field.name, action: 'trim' }]
-    return []
-  }), [profile])
+  const suggestedRepairs = useMemo<RepairRule[]>(() =>
+    profile.reduce<RepairRule[]>((repairs, field) => {
+      if (field.type === 'email') repairs.push({ field: field.name, action: 'normalizeEmail' })
+      if (field.type === 'number' && field.empty > 0) {
+        repairs.push({ field: field.name, action: 'fillEmpty', value: '0' })
+      }
+      if (field.type === 'text') repairs.push({ field: field.name, action: 'trim' })
+      return repairs
+    }, []),
+  [profile])
   const completeness = profile.length
     ? Math.round((profile.reduce((sum, field) => sum + field.completeness, 0) / profile.length) * 100)
     : 0
