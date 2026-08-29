@@ -26,6 +26,16 @@ describe('DataForge workflow', () => {
     expect(screen.getByText('not-an-email')).toBeInTheDocument()
   })
 
+  it('opens a newly loaded workspace at the top of the page', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    document.documentElement.scrollTop = 640
+
+    await user.click(screen.getByRole('button', { name: /load sample data/i }))
+
+    expect(document.documentElement.scrollTop).toBe(0)
+  })
+
   it('applies suggested repairs and updates the issue count', async () => {
     const user = userEvent.setup()
     render(<App />)

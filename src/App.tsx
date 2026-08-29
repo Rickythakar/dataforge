@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ChangeEvent, type DragEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from 'react'
 import { exportCsv, parseCsv } from './lib/csv'
 import {
   applyRepairs,
@@ -50,6 +50,13 @@ function App() {
   const completeness = profile.length
     ? Math.round((profile.reduce((sum, field) => sum + field.completeness, 0) / profile.length) * 100)
     : 0
+
+  useEffect(() => {
+    if (rows.length > 0) {
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+    }
+  }, [rows.length])
 
   const loadRows = (nextRows: DataRow[], nextFields: string[], name: string, nextRules?: ValidationRule[]) => {
     setRows(nextRows)
