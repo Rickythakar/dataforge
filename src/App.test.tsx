@@ -60,4 +60,18 @@ describe('DataForge workflow', () => {
     expect(screen.getByRole('columnheader', { name: /contact name/i })).toBeInTheDocument()
     expect(screen.getByText(/column mapping applied/i)).toBeInTheDocument()
   })
+
+  it('keeps suggested repairs working after columns are renamed', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /load sample data/i }))
+    await user.click(screen.getByRole('button', { name: /map columns/i }))
+    await user.clear(screen.getByRole('textbox', { name: /target name for seats/i }))
+    await user.type(screen.getByRole('textbox', { name: /target name for seats/i }), 'license_count')
+    await user.click(screen.getByRole('button', { name: /apply mapping/i }))
+    await user.click(screen.getByRole('button', { name: /apply 3 suggested fixes/i }))
+
+    expect(screen.getByText('5 issues')).toBeInTheDocument()
+  })
 })

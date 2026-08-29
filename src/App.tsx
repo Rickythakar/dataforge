@@ -6,6 +6,7 @@ import {
   profileDataset,
   validateDataset,
   type DataRow,
+  type RepairRule,
   type ValidationRule,
 } from './lib/dataforge'
 import { sampleRows, sampleRules } from './data/sample'
@@ -47,6 +48,12 @@ function App() {
 
   const profile = useMemo(() => profileDataset(rows), [rows])
   const issues = useMemo(() => validateDataset(rows, rules), [rows, rules])
+  const suggestedRepairs = useMemo<RepairRule[]>(() => profile.flatMap((field) => {
+    if (field.type === 'email') return [{ field: field.name, action: 'normalizeEmail' }]
+    if (field.type === 'number' && field.empty > 0) return [{ field: field.name, action: 'fillEmpty', value: '0' }]
+    if (field.type === 'text') return [{ field: field.name, action: 'trim' }]
+    return []
+  }), [profile])
   const completeness = profile.length
     ? Math.round((profile.reduce((sum, field) => sum + field.completeness, 0) / profile.length) * 100)
     : 0
@@ -99,13 +106,9 @@ function App() {
   }
 
   const applySuggestedFixes = () => {
-    const nextRows = applyRepairs(rows, [
-      { field: 'full_name', action: 'trim' },
-      { field: 'email', action: 'normalizeEmail' },
-      { field: 'seats', action: 'fillEmpty', value: '0' },
-    ])
+    const nextRows = applyRepairs(rows, suggestedRepairs)
     setRows(nextRows)
-    setNotice('3 safe fixes applied. Review the remaining flagged values before export.')
+    setNotice(`${suggestedRepairs.length} safe fixes applied. Review the remaining flagged values before export.`)
   }
 
   const applyMapping = () => {
@@ -257,7 +260,7 @@ function App() {
                     </div>
                   ))}
                 </div>
-                <button className="button button-fix" onClick={applySuggestedFixes}>Apply 3 suggested fixes <span>→</span></button>
+                <button className="button button-fix" onClick={applySuggestedFixes}>Apply {suggestedRepairs.length} suggested fixes <span>→</span></button>
               </section>
             </div>
 
