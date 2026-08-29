@@ -2,6 +2,7 @@ import { useMemo, useRef, useState, type ChangeEvent, type DragEvent } from 'rea
 import { exportCsv, parseCsv } from './lib/csv'
 import {
   applyRepairs,
+  mapColumns,
   profileDataset,
   validateDataset,
   type DataRow,
@@ -40,6 +41,9 @@ function App() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [dragging, setDragging] = useState(false)
+  const [mappingOpen, setMappingOpen] = useState(false)
+  const [mappingDraft, setMappingDraft] = useState<Record<string, string>>({})
+  const [mappingError, setMappingError] = useState('')
 
   const profile = useMemo(() => profileDataset(rows), [rows])
   const issues = useMemo(() => validateDataset(rows, rules), [rows, rules])
@@ -52,6 +56,7 @@ function App() {
     setFields(nextFields)
     setFileName(name)
     setRules(nextRules ?? nextFields.flatMap(defaultRuleFor))
+    setMappingDraft(Object.fromEntries(nextFields.map((field) => [field, field])))
     setError('')
     setNotice('')
   }
@@ -94,6 +99,27 @@ function App() {
     ])
     setRows(nextRows)
     setNotice('3 safe fixes applied. Review the remaining flagged values before export.')
+  }
+
+  const applyMapping = () => {
+    const targets = fields.map((field) => mappingDraft[field]?.trim() ?? '')
+    if (targets.some((field) => !field)) {
+      setMappingError('Every source column needs a target name.')
+      return
+    }
+    if (new Set(targets).size !== targets.length) {
+      setMappingError('Target column names must be unique.')
+      return
+    }
+
+    const mapping = Object.fromEntries(fields.map((field, index) => [field, targets[index]]))
+    setRows(mapColumns(rows, mapping))
+    setFields(targets)
+    setRules(rules.map((rule) => ({ ...rule, field: mapping[rule.field] || rule.field })))
+    setMappingDraft(Object.fromEntries(targets.map((field) => [field, field])))
+    setMappingOpen(false)
+    setMappingError('')
+    setNotice('Column mapping applied. Validation rules and preview were updated.')
   }
 
   const downloadCsv = () => {
@@ -202,7 +228,7 @@ function App() {
 
             <div className="dashboard-grid">
               <section className="panel field-panel" id="field-profile">
-                <div className="panel-heading"><div><span className="section-number">01</span><h2>Field profile</h2></div><small>{fields.length} detected fields</small></div>
+                <div className="panel-heading"><div><span className="section-number">01</span><h2>Field profile</h2></div><button className="panel-action" onClick={() => setMappingOpen(true)}>Map columns</button></div>
                 <div className="field-list">
                   {profile.map((field) => (
                     <div className="field-row" key={field.name}>
@@ -250,9 +276,31 @@ function App() {
           </section>
         </main>
       )}
+
+      {mappingOpen && (
+        <div className="modal-backdrop" role="presentation" onMouseDown={() => setMappingOpen(false)}>
+          <section className="mapping-modal" role="dialog" aria-modal="true" aria-labelledby="mapping-title" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="modal-heading">
+              <div><span className="eyebrow"><span>MAP</span> Destination schema</span><h2 id="mapping-title">Map source columns</h2></div>
+              <button className="close-button" aria-label="Close mapping" onClick={() => setMappingOpen(false)}>×</button>
+            </div>
+            <p>Rename columns to match the system receiving this file. DataForge will update the preview and validation rules automatically.</p>
+            <div className="mapping-list">
+              {fields.map((field) => (
+                <label key={field}>
+                  <span><small>Source</small><strong>{labelFor(field)}</strong></span>
+                  <i aria-hidden="true">→</i>
+                  <span className="target-field"><small>Target</small><input aria-label={`Target name for ${labelFor(field)}`} value={mappingDraft[field] ?? field} onChange={(event) => setMappingDraft({ ...mappingDraft, [field]: event.target.value })} /></span>
+                </label>
+              ))}
+            </div>
+            {mappingError && <p className="modal-error" role="alert">{mappingError}</p>}
+            <div className="modal-actions"><button className="button button-ghost" onClick={() => setMappingOpen(false)}>Cancel</button><button className="button button-primary" onClick={applyMapping}>Apply mapping</button></div>
+          </section>
+        </div>
+      )}
     </div>
   )
 }
 
 export default App
-

@@ -36,4 +36,18 @@ describe('DataForge workflow', () => {
     expect(screen.getByText('5 issues')).toBeInTheDocument()
     expect(screen.getByText(/3 safe fixes applied/i)).toBeInTheDocument()
   })
+
+  it('maps source columns to system-ready target names', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /load sample data/i }))
+    await user.click(screen.getByRole('button', { name: /map columns/i }))
+    await user.clear(screen.getByRole('textbox', { name: /target name for full name/i }))
+    await user.type(screen.getByRole('textbox', { name: /target name for full name/i }), 'contact_name')
+    await user.click(screen.getByRole('button', { name: /apply mapping/i }))
+
+    expect(screen.getByRole('columnheader', { name: /contact name/i })).toBeInTheDocument()
+    expect(screen.getByText(/column mapping applied/i)).toBeInTheDocument()
+  })
 })
